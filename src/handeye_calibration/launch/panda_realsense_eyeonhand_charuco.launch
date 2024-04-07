@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<launch>
+    <arg name="namespace_prefix" default="panda_eoh_calib"/>
+
+    <!-- (start your robot's MoveIt! stack, e.g. include its moveit_planning_execution.launch) -->
+    <include file="$(find panda_moveit_config)/launch/franka_control.launch">
+        <arg name="robot_ip" value="172.16.0.2"/> <!-- set your robot ip -->
+        <arg name="load_gripper" value="true"/>
+    </include>        
+    
+    <!-- (start your tracking system's ROS driver) -->
+    <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch"> </include>      -->
+    <include file="$(find realsense2_camera)/launch/rs_rgbd.launch"> </include>     
+
+    <!-- start tracking system -->
+    <arg name="camera_namespace" default="/camera/color" doc="The topic namespace containing the camera's camera_info and image_rect_color topics" />
+    <arg name="dictionary" default = "DICT_6X6_250" doc="The OpenCV ID of the ArUco dictionary used to create the markers (e.g. DICT_6X6_250)" />
+    <arg name="camera_frame" default = "camera_link" doc="The tf frame corresponding to the optical frame of the RGB camera" />
+    <arg name="reference_frame" default="camera_link" doc="The tf frame with respect to which the pose will be published" />
+
+    <arg name="marker_size" default ="0.090"    doc="The size of the markers placed on the white squares of the chessboard (in meters)" />
+    <arg name="square_size" default = "0.120"  doc="The size of the squares of the chessboard (in meters)" />
+    <arg name="square_number_x" default = "4"   doc="The number of squares in the x direction" />
+    <arg name="square_number_y" default = "4"   doc="The number of squares in the y direction" />
+
+    <node pkg="easy_aruco" type="easy_aruco_node" name="easy_aruco_node" output="screen" >
+        <param name="object_type" value="charuco_board" />
+        <param name="camera_namespace" value="$(arg camera_namespace)" />
+        <param name="dictionary" value="$(arg dictionary)" />
+        <param name="camera_frame" value="$(arg camera_frame)" />
+        <param name="reference_frame" value="$(arg reference_frame)" />
+
+        <param name="marker_size" value="$(arg marker_size)" />
+        <param name="square_size" value="$(arg square_size)" />
+        <param name="square_number_x" value="$(arg square_number_x)" />
+        <param name="square_number_y" value="$(arg square_number_y)" />
+    </node>
+
+    <!-- (start hand-eye-calibration) -->
+    <include file="$(find easy_handeye)/launch/calibrate.launch">
+        <arg name="eye_on_hand" value="true"/>
+        <arg name="namespace_prefix" value="$(arg namespace_prefix)"/>
+        <arg name="move_group" value="panda_manipulator"  doc="the name of move_group for the automatic robot motion with MoveIt!" />
+        <arg name="freehand_robot_movement" value="false"/>
+
+        <!-- fill in the following parameters according to your robot's published tf frames -->
+        <arg name="robot_base_frame" value="panda_link0"/>
+        <!-- <arg name="robot_effector_frame" value="panda_hand_tcp"/> -->
+        <arg name="robot_effector_frame" value="panda_hand"/>
+
+        <!-- fill in the following parameters according to your tracking system's published tf frames -->
+        <arg name="tracking_base_frame" value="camera_link"/>
+        <arg name="tracking_marker_frame" value="board"/>
+    </include>
+
+    <!-- (publish tf after the calibration) -->
+    <!-- roslaunch easy_handeye publish.launch eye_on_hand:=false namespace_prefix:=$(arg namespace_prefix) -->
+
+</launch>
+

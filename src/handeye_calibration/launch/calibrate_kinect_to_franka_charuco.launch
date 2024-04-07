@@ -1,0 +1,65 @@
+<launch>
+    <!-- (start your robot's MoveIt! stack, e.g. include its moveit_planning_execution.launch) -->
+    <!-- <include file="$(find franka_visualization)/launch/franka_visualization.launch">
+        <arg name="robot_ip" value="172.16.0.2"/> 
+        <arg name="load_gripper" value="false"/>
+    </include>  -->
+
+    <arg name="rgb_rect" default="0" />
+    <arg name="depth_rect" default="0" />
+    <arg name="ir_rect" default="0" />
+    <arg name="point_cloud" default="0" />
+    <arg name="rgb_point_cloud" default="0" />
+    <arg name="ref_frame"       default="rgb_camera_link"/> 
+    <arg name="marker_frame"    default="board"/> 
+
+    <!-- start the k4a sensor driver -->
+    <include file="$(find azure_kinect_ros_driver)/launch/driver.launch" >
+        <arg name="overwrite_robot_description" value="false" />
+    </include>
+
+<!-- charuco detect -->
+    <arg name="camera_namespace" default="/rgb" doc="The topic namespace containing the camera's camera_info and image_rect_color topics" />
+    <arg name="dictionary" default = "DICT_6X6_250" doc="The OpenCV ID of the ArUco dictionary used to create the markers (e.g. DICT_6X6_250)" />
+    <arg name="camera_frame" default = "rgb_camera_link" doc="The tf frame corresponding to the optical frame of the RGB camera" />
+    <arg name="reference_frame" default="" doc="The tf frame with respect to which the pose will be published" />
+
+    <arg name="marker_size" default ="0.090"    doc="The size of the markers placed on the white squares of the chessboard (in meters)" />
+    <arg name="square_size" default = "0.120"  doc="The size of the squares of the chessboard (in meters)" />
+    <arg name="square_number_x" default = "4"   doc="The number of squares in the x direction" />
+    <arg name="square_number_y" default = "4"   doc="The number of squares in the y direction" />
+
+    <node pkg="easy_aruco" type="easy_aruco_node" name="easy_aruco_node" output="screen" >
+        <param name="object_type" value="charuco_board" />
+        <param name="camera_namespace" value="$(arg camera_namespace)" />
+        <param name="dictionary" value="$(arg dictionary)" />
+        <param name="camera_frame" value="$(arg camera_frame)" />
+        <param name="reference_frame" value="$(arg reference_frame)" />
+
+        <param name="marker_size" value="$(arg marker_size)" />
+        <param name="square_size" value="$(arg square_size)" />
+        <param name="square_number_x" value="$(arg square_number_x)" />
+        <param name="square_number_y" value="$(arg square_number_y)" />
+    </node>
+
+
+    <include file="$(find easy_handeye)/launch/calibrate.launch">
+        <arg name="eye_on_hand" value="false"/>
+        <arg name="namespace_prefix" value="franka_kinect_eye_to_hand_calibration_202309091040"/>
+        <arg name="freehand_robot_movement" value="true"/>
+        <arg name="start_rviz" value="false" />
+
+        <!-- fill in the following parameters according to your robot's published tf frames -->
+        <arg name="robot_base_frame" value="panda_link0"/>
+        <arg name="robot_effector_frame" value="panda_link8"/>
+
+        <!-- fill in the following parameters according to your tracking system's published tf frames -->
+        <arg name="tracking_base_frame" value="$(arg ref_frame)"/>
+        <arg name="tracking_marker_frame" value="$(arg marker_frame)"/>
+    </include>
+
+
+    <include file="$(find franka_visualization)/launch/franka_visualization.launch">
+    </include>
+
+</launch>

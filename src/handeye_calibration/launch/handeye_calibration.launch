@@ -20,7 +20,7 @@
 
     <!-- to use the compressed image, if the image_raw is too slow -->
     <arg name="camera_image_compressed_topic" default="/left_arm_camera/color/image_raw/compressed" />
-    <node pkg="aruco_ros" type="image_convert" name="aruco_image_convert" output="screen"/>
+    <node pkg="handeye_calibration" type="image_convert" name="aruco_image_convert" output="screen"/>
 
     <node pkg="aruco_ros" type="single" name="aruco_single" output="screen">
         <remap to="$(arg camera_info_topic)" from="/camera_info" />

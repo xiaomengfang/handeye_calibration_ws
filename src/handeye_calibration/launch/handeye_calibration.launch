@@ -1,0 +1,54 @@
+<launch>
+    <arg name="namespace_prefix" default="handeye_calibration" />
+
+    <!-- launch the robot and the camera -->
+    <!-- <include file="$(find galbot_bringup)/launch/galbot_bringup.launch">
+        <arg name="left_arm_camera" value="true"/>
+        <arg name="left_arm" value="true"/>
+    </include> -->
+
+    <!-- launch aruco tracking system -->
+    <arg name="markerId"        default="582"/>      <!-- set your marker id -->
+    <arg name="markerSize"      default="0.1"/>    <!-- in m -->
+    <arg name="eye"             default="left"/>
+    <arg name="marker_frame"    default="aruco_marker_frame"/> 
+    <arg name="ref_frame"       default=""/>  <!-- leave empty and the pose will be published wrt param parent_name -->
+    <arg name="corner_refinement" default="LINES" /> <!-- NONE, HARRIS, LINES, SUBPIX -->    
+    <arg name="camera_frame" default="left_arm_camera_color_optical_frame" />
+    <arg name="camera_image_topic" default="/image" />
+    <arg name="camera_info_topic" default="/left_arm_camera/color/camera_info" /> 
+
+    <!-- to use the compressed image, if the image_raw is too slow -->
+    <arg name="camera_image_compressed_topic" default="/left_arm_camera/color/image_raw/compressed" />
+    <node pkg="aruco_ros" type="image_convert" name="aruco_image_convert" output="screen"/>
+
+    <node pkg="aruco_ros" type="single" name="aruco_single" output="screen">
+        <remap to="$(arg camera_info_topic)" from="/camera_info" />
+        <remap to="$(arg camera_image_topic)" from="/image" />
+        <param name="image_is_rectified" value="True"/>
+        <param name="marker_size"        value="$(arg markerSize)"/>
+        <param name="marker_id"          value="$(arg markerId)"/>
+        <param name="reference_frame"    value="$(arg ref_frame)"/>   <!-- frame in which the marker pose will be refered -->
+        <param name="camera_frame"       value="$(arg camera_frame)"/>
+        <param name="marker_frame"       value="$(arg marker_frame)" />
+        <param name="corner_refinement"  value="$(arg corner_refinement)" />
+    </node>
+
+    <!-- start easy_handeye -->
+    <include file="$(find easy_handeye)/launch/calibrate.launch" >
+        <arg name="namespace_prefix" value="$(arg namespace_prefix)" />
+        <arg name="eye_on_hand" value="true" />
+        <arg name="tracking_base_frame" value="left_arm_camera_color_optical_frame"/>
+        <arg name="tracking_marker_frame" value="aruco_marker_frame"/>
+        <arg name="robot_base_frame" value="left_arm_base_link" />
+        <!-- <arg name="robot_base_frame" value="robot_base_link" /> -->
+        <!-- <arg name="robot_effector_frame" value="left_arm_end_effector_flange_link" /> -->
+        <arg name="robot_effector_frame" value="left_arm_link7" />
+        <arg name="freehand_robot_movement" value="true" />
+        <arg name="robot_velocity_scaling" value="0.5" />
+        <arg name="robot_acceleration_scaling" value="0.2" />
+        <arg name="translation_delta_meters" default="0.05"  />
+        <arg name="rotation_delta_degrees" default="25"  />
+    </include>
+
+</launch>
